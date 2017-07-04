@@ -21,7 +21,7 @@
 
 ## Priors
 
-P(class) = occurences(class) / documents
+P(class) = occurrences(class) / documents
 
 P(lights:off) = 4/12
 
@@ -31,7 +31,7 @@ P(progress:list) = 4/12
 
 ## Conditional Probabilities
 
-P(word|class) = (occurence class + smoothing) / (words in class / unique words total)
+P(word|class) = (occurrence class + smoothing) / (words in class / unique words total)
 
 P(lights|lights:off) = (4 + 1) / (15 + 22) = 5/37
 

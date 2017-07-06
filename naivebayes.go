@@ -1,9 +1,9 @@
-package main
+// This package provides a simple multinomial naive bayes implementation.
+//
+// Copyright (C) 2017 by Dominique Henkes <hello@henkes.io>
+package naivebayes
 
-import (
-	"fmt"
-	"strings"
-)
+import "strings"
 
 const defaultProb = 0.00000000001
 
@@ -58,8 +58,8 @@ func NewClassifier(n int) *Classifier {
 	}
 }
 
-// Learn adds the ngrams of a sentence to an existing or new class.
-func (c *Classifier) Learn(class string, sentence string) {
+// Train adds the ngrams of a sentence to an existing or new class.
+func (c *Classifier) Train(class string, sentence string) {
 	c.Documents++
 	_, exists := c.Classes[class]
 	if exists == false {
@@ -84,10 +84,10 @@ func (c *Classifier) GetPrior(class string) float64 {
 	return c.Classes[class].Documents / c.Documents
 }
 
-// GetProbabilities returns the probabilities for a sentence belonging to a
+// Classify returns the probabilities for a sentence belonging to a
 // certain class. These probabilities are calculated by taking the class prior
 // P(class) and multiplying it by the conditional probabilities P(word|class).
-func (c *Classifier) GetProbabilities(sentence string) map[string]float64 {
+func (c *Classifier) Classify(sentence string) map[string]float64 {
 	probabilities := make(map[string]float64)
 	uniqueWordCount := float64(len(c.UniqueWords))
 	words := GetNgrams(c.Ngram, sentence)
@@ -106,69 +106,4 @@ func (c *Classifier) GetProbabilities(sentence string) map[string]float64 {
 	}
 
 	return probabilities
-}
-
-func main() {
-	// Everything in main is just for testing
-
-	unigram := NewClassifier(1)
-	unigram.Learn("lights:toggle", "lights")
-	unigram.Learn("lights:off", "turn off the lights")
-	unigram.Learn("lights:off", "can you turn the lights off")
-	unigram.Learn("lights:off", "lights off please")
-	unigram.Learn("lights:off", "lights off")
-	unigram.Learn("lights:on", "turn on the lights")
-	unigram.Learn("lights:on", "can you turn the lights on")
-	unigram.Learn("lights:on", "lights on please")
-	unigram.Learn("lights:on", "lights on")
-	unigram.Learn("progress:list", "what is my progress")
-	unigram.Learn("progress:list", "how far am i")
-	unigram.Learn("progress:list", "can you show me my progress")
-	unigram.Learn("progress:list", "what is my current lesson")
-
-	bigram := NewClassifier(2)
-	bigram.Learn("lights:toggle", "lights")
-	bigram.Learn("lights:off", "turn off the lights")
-	bigram.Learn("lights:off", "can you turn the lights off")
-	bigram.Learn("lights:off", "lights off please")
-	bigram.Learn("lights:off", "lights off")
-	bigram.Learn("lights:on", "turn on the lights")
-	bigram.Learn("lights:on", "can you turn the lights on")
-	bigram.Learn("lights:on", "lights on please")
-	bigram.Learn("lights:on", "lights on")
-	bigram.Learn("progress:list", "what is my progress")
-	bigram.Learn("progress:list", "how far am i")
-	bigram.Learn("progress:list", "can you show me my progress")
-	bigram.Learn("progress:list", "what is my current lesson")
-
-	uniProb1 := unigram.GetProbabilities("lights")
-	biProb1 := bigram.GetProbabilities("lights")
-	for k, v := range uniProb1 {
-		fmt.Printf("Input:   lights\n")
-		fmt.Printf("Class:   %s\n", k)
-		fmt.Printf("Unigram: %f\n", v)
-		fmt.Printf("Bigram:  %f\n\n", biProb1[k])
-	}
-
-	fmt.Printf("-----\n\n")
-
-	uniProb2 := unigram.GetProbabilities("could you turn the lights off")
-	biProb2 := bigram.GetProbabilities("could you turn the lights off")
-	for k, v := range uniProb2 {
-		fmt.Printf("Input:   could you turn the lights off\n")
-		fmt.Printf("Class:   %s\n", k)
-		fmt.Printf("Unigram: %f\n", v)
-		fmt.Printf("Bigram:  %f\n\n", biProb2[k])
-	}
-
-	fmt.Printf("-----\n\n")
-
-	uniProb3 := unigram.GetProbabilities("whats the current progress")
-	biProb3 := bigram.GetProbabilities("whats the current progress")
-	for k, v := range uniProb3 {
-		fmt.Printf("Input:   what's the current progress\n")
-		fmt.Printf("Class:   %s\n", k)
-		fmt.Printf("Unigram: %f\n", v)
-		fmt.Printf("Bigram:  %f\n\n", biProb3[k])
-	}
 }

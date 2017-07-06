@@ -7,20 +7,32 @@ import (
 
 const defaultProb = 0.00000000001
 
+// Class contains the document count, an array of all words used in those documents
+// (the array contains duplicates) and a map with the word frequency which can
+// be used to obtain the unique word count.
 type Class struct {
 	Documents float64
 	Words     []string
 	WordFreq  map[string]float64
 }
 
+// Classifier gives us total document count, the length of the ngrams being used,
+// a map with all classes and a map with the word frequency which again can be
+// used to obtain the unique word count.
 type Classifier struct {
 	Ngram       int
 	Documents   float64
 	Classes     map[string]*Class
-	UniqueWords map[string]int
+	UniqueWords map[string]float64
 }
 
-func GetNGrams(size int, sentence string) []string {
+// GetNgrams returns an array of sequences of n items. The length n is defined
+// by the parameter size.
+//
+// The input (1, "this outputs ngrams") would be ["this", "outputs", "ngrams"].
+//
+// The input (2, "this outputs ngrams") would be ["this outputs", "outputs ngrams"].
+func GetNgrams(size int, sentence string) []string {
 	ngrams := []string{}
 	words := strings.Split(sentence, " ")
 
@@ -36,20 +48,17 @@ func GetNGrams(size int, sentence string) []string {
 	return ngrams
 }
 
+// NewClassifier returns a new classifier which initiates two empty maps. This
+// could later be improved so that everything is saved more efficiently.
 func NewClassifier(n int) *Classifier {
 	return &Classifier{
 		Ngram:       n,
 		Classes:     make(map[string]*Class),
-		UniqueWords: make(map[string]int),
+		UniqueWords: make(map[string]float64),
 	}
 }
 
-func (c *Classifier) AddWord(class string, word string) {
-	c.UniqueWords[word]++
-	c.Classes[class].Words = append(c.Classes[class].Words, word)
-	c.Classes[class].WordFreq[word]++
-}
-
+// Learn adds the ngrams of a sentence to an existing or new class.
 func (c *Classifier) Learn(class string, sentence string) {
 	c.Documents++
 	_, exists := c.Classes[class]
@@ -60,9 +69,11 @@ func (c *Classifier) Learn(class string, sentence string) {
 	}
 
 	c.Classes[class].Documents++
-	words := GetNGrams(c.Ngram, sentence)
+	words := GetNgrams(c.Ngram, sentence)
 	for _, word := range words {
-		c.AddWord(class, word)
+		c.UniqueWords[word]++
+		c.Classes[class].Words = append(c.Classes[class].Words, word)
+		c.Classes[class].WordFreq[word]++
 	}
 }
 
@@ -73,10 +84,13 @@ func (c *Classifier) GetPrior(class string) float64 {
 	return c.Classes[class].Documents / c.Documents
 }
 
+// GetProbabilities returns the probabilities for a sentence belonging to a
+// certain class. These probabilities are calculated by taking the class prior
+// P(class) and multiplying it by the conditional probabilities P(word|class).
 func (c *Classifier) GetProbabilities(sentence string) map[string]float64 {
 	probabilities := make(map[string]float64)
 	uniqueWordCount := float64(len(c.UniqueWords))
-	words := GetNGrams(c.Ngram, sentence)
+	words := GetNgrams(c.Ngram, sentence)
 
 	for class, data := range c.Classes {
 		probabilities[class] = c.GetPrior(class)
